@@ -11,9 +11,9 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { email, fields } = req.body || {};
-  if (!email || !fields) {
-    return res.status(400).json({ error: 'Missing email or fields' });
+  const { fields } = req.body || {};
+  if (!fields) {
+    return res.status(400).json({ error: 'Missing fields' });
   }
 
   const token = process.env.JIRA_TOKEN;
@@ -21,7 +21,7 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: 'Server missing JIRA_TOKEN env var. Set it in Vercel: Settings → Environment Variables.' });
   }
 
-  const auth = Buffer.from(`${email}:${token}`).toString('base64');
+  const auth = Buffer.from(`luca@cremanski.com:${token}`).toString('base64');
 
   try {
     const r = await fetch(`${JIRA_URL}/rest/api/3/issue`, {

@@ -4,7 +4,6 @@ const ISSUE_TYPE = 'Story';
 
 const jiraProject = document.getElementById('jiraProject');
 const jiraEpic = document.getElementById('jiraEpic');
-const jiraEmail = document.getElementById('jiraEmail');
 const pasteInput = document.getElementById('paste');
 const parseBtn = document.getElementById('parseBtn');
 const clearBtn = document.getElementById('clearBtn');
@@ -23,7 +22,7 @@ let tickets = [];
 let idCounter = 0;
 
 // === Persist Jira config ===
-const cfgFields = { jiraProject, jiraEpic, jiraEmail };
+const cfgFields = { jiraProject, jiraEpic };
 for (const [key, el] of Object.entries(cfgFields)) {
   const saved = localStorage.getItem(`jira_${key}`);
   if (saved) el.value = saved;
@@ -196,11 +195,9 @@ createBtn.addEventListener('click', createInJira);
 async function createInJira() {
   const project = jiraProject.value.trim();
   const defaultEpic = jiraEpic.value.trim();
-  const email = jiraEmail.value.trim();
 
   const missing = [];
   if (!project) missing.push('Product code');
-  if (!email) missing.push('Email');
   if (missing.length) {
     showModal('Missing fields', `<p>Fill in Step 1: <strong>${missing.join(', ')}</strong>.</p>`);
     return;
@@ -227,7 +224,7 @@ async function createInJira() {
       const r = await fetch('/api/jira-create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, fields })
+        body: JSON.stringify({ fields })
       });
       const data = await r.json().catch(() => ({}));
       if (r.ok && data.key) {

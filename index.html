@@ -56,7 +56,7 @@
         <h2 class="text-base font-semibold navy-text">Jira defaults</h2>
       </div>
       <p class="text-xs text-slate-500 mb-4">URL <code class="bg-slate-100 px-1 rounded">cremanskicompany.atlassian.net</code> and issue type <code class="bg-slate-100 px-1 rounded">Story</code> are fixed. API token is loaded server-side from a Vercel env var.</p>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Product code (project key)</label>
           <input id="jiraProject" type="text" placeholder="e.g. PROJ"
@@ -66,11 +66,6 @@
           <label class="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Default Epic <span class="text-slate-400 normal-case font-normal">(per-ticket override possible)</span></label>
           <input id="jiraEpic" type="text" placeholder="e.g. PROJ-123"
             class="w-full border border-slate-300 rounded px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#C9A227]">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Your Atlassian email</label>
-          <input id="jiraEmail" type="email" placeholder="you@cremanski.com"
-            class="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A227]">
         </div>
       </div>
     </section>
