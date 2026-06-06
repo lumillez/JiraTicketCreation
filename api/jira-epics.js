@@ -24,10 +24,17 @@ module.exports = async function handler(req, res) {
 
   try {
     let epics = [];
-    let startAt = 0;
-    const maxResults = 50;
+    let nextPageToken = undefined;
+    const maxResults = 100;
 
     while (true) {
+      const payload = {
+        jql: `project = ${project} AND issuetype = Epic ORDER BY created DESC`,
+        maxResults,
+        fields: ['summary']
+      };
+      if (nextPageToken) payload.nextPageToken = nextPageToken;
+
       const r = await fetch(
         `${JIRA_URL}/rest/api/3/search/jql`,
         {
@@ -37,20 +44,15 @@ module.exports = async function handler(req, res) {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({
-            jql: `project = ${project} AND issuetype = Epic ORDER BY created DESC`,
-            maxResults,
-            startAt,
-            fields: ['summary', 'key']
-          })
+          body: JSON.stringify(payload)
         }
       );
       const data = await r.json();
       if (!r.ok) return res.status(r.status).json(data);
 
       epics = epics.concat(data.issues || []);
-      if (epics.length >= data.total || (data.issues || []).length === 0) break;
-      startAt += maxResults;
+      if (data.isLast || !data.nextPageToken) break;
+      nextPageToken = data.nextPageToken;
     }
 
     return res.status(200).json(epics.map(i => ({
