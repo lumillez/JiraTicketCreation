@@ -140,9 +140,19 @@ wireEpicAutocomplete(jiraEpic, epicDropdown);
 const SEP_RE = /^\s*[━─\-=]{3,}\s*$/;
 const TICKET_NR_RE = /^\s*TICKET\s+NR\.?\s*\**\s*\d+\s*\**\s*$/i;
 
+function stripFooter(text) {
+  const lines = text.split('\n');
+  const footerIdx = lines.findIndex(l => /copy this and paste it/i.test(l));
+  if (footerIdx === -1) return text;
+  // Cut from the footer line, then drop any trailing separator/blank lines before it
+  let end = footerIdx;
+  while (end > 0 && (lines[end - 1].trim() === '' || SEP_RE.test(lines[end - 1]))) end--;
+  return lines.slice(0, end).join('\n');
+}
+
 function parseTickets(text) {
   if (!text || !text.trim()) return { tickets: [], warning: '' };
-  const lines = text.split('\n');
+  const lines = stripFooter(text).split('\n');
 
   // Primary format: blocks starting with "TICKET NR. **N**"
   const boundaries = [];
