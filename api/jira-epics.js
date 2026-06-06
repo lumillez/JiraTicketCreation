@@ -28,14 +28,21 @@ module.exports = async function handler(req, res) {
     const maxResults = 50;
 
     while (true) {
-      const jql = encodeURIComponent(`project = ${project} AND issuetype = Epic ORDER BY created DESC`);
       const r = await fetch(
-        `${JIRA_URL}/rest/api/3/search?jql=${jql}&maxResults=${maxResults}&startAt=${startAt}&fields=summary,key`,
+        `${JIRA_URL}/rest/api/3/search/jql`,
         {
+          method: 'POST',
           headers: {
             'Authorization': `Basic ${auth}`,
-            'Accept': 'application/json'
-          }
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            jql: `project = ${project} AND issuetype = Epic ORDER BY created DESC`,
+            maxResults,
+            startAt,
+            fields: ['summary', 'key']
+          })
         }
       );
       const data = await r.json();
