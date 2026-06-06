@@ -54,7 +54,8 @@ function hideDropdown(dropdown) {
 }
 
 function wireEpicAutocomplete(input, dropdownEl) {
-  input.addEventListener('input', () => {
+  const refresh = () => {
+    if (document.activeElement !== input) { hideDropdown(dropdownEl); return; }
     const q = input.value.toLowerCase();
     const filtered = allEpics.filter(e =>
       e.key.toLowerCase().includes(q) || e.summary.toLowerCase().includes(q)
@@ -62,13 +63,13 @@ function wireEpicAutocomplete(input, dropdownEl) {
     const items = filtered.map(e =>
       makeDropdownItem(`${e.key} — ${e.summary}`, () => {
         input.value = e.key;
-        input.dispatchEvent(new Event('input'));
         hideDropdown(dropdownEl);
       })
     );
     showDropdown(dropdownEl, items);
-  });
-  input.addEventListener('focus', () => input.dispatchEvent(new Event('input')));
+  };
+  input.addEventListener('input', refresh);
+  input.addEventListener('focus', refresh);
   input.addEventListener('blur', () => setTimeout(() => hideDropdown(dropdownEl), 150));
 }
 
@@ -105,8 +106,9 @@ async function loadEpics(projectKey) {
 }
 
 // === Wire project autocomplete ===
-jiraProject.addEventListener('input', () => {
+const refreshProject = () => {
   localStorage.setItem('jira_jiraProject', jiraProject.value);
+  if (document.activeElement !== jiraProject) { hideDropdown(projectDropdown); return; }
   const q = jiraProject.value.toLowerCase();
   const filtered = allProjects.filter(p =>
     p.key.toLowerCase().includes(q) || p.name.toLowerCase().includes(q)
@@ -122,8 +124,9 @@ jiraProject.addEventListener('input', () => {
     })
   );
   showDropdown(projectDropdown, items);
-});
-jiraProject.addEventListener('focus', () => jiraProject.dispatchEvent(new Event('input')));
+};
+jiraProject.addEventListener('input', refreshProject);
+jiraProject.addEventListener('focus', refreshProject);
 jiraProject.addEventListener('blur', () => setTimeout(() => hideDropdown(projectDropdown), 150));
 jiraProject.addEventListener('change', () => {
   const match = allProjects.find(p => p.key === jiraProject.value.toUpperCase());
@@ -243,8 +246,9 @@ function renderTicketCard(ticket) {
   previewEl.innerHTML = marked.parse(ticket.body || '');
 
   titleI.addEventListener('input', () => { ticket.title = titleI.value; });
-  epicI.addEventListener('input', () => {
+  const refreshEpic = () => {
     ticket.epic = epicI.value;
+    if (document.activeElement !== epicI) { hideDropdown(epicDrop); return; }
     const q = epicI.value.toLowerCase();
     const filtered = allEpics.filter(e =>
       e.key.toLowerCase().includes(q) || e.summary.toLowerCase().includes(q)
@@ -257,8 +261,9 @@ function renderTicketCard(ticket) {
       })
     );
     showDropdown(epicDrop, items);
-  });
-  epicI.addEventListener('focus', () => epicI.dispatchEvent(new Event('input')));
+  };
+  epicI.addEventListener('input', refreshEpic);
+  epicI.addEventListener('focus', refreshEpic);
   epicI.addEventListener('blur', () => setTimeout(() => hideDropdown(epicDrop), 150));
   bodyI.addEventListener('input', () => {
     ticket.body = bodyI.value;
