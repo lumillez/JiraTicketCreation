@@ -58,14 +58,20 @@
       <p class="text-xs text-slate-500 mb-4">URL <code class="bg-slate-100 px-1 rounded">cremanskicompany.atlassian.net</code> and issue type <code class="bg-slate-100 px-1 rounded">Story</code> are fixed. API token is loaded server-side from a Vercel env var.</p>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Product code (project key)</label>
-          <input id="jiraProject" type="text" placeholder="e.g. PROJ"
-            class="w-full border border-slate-300 rounded px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#C9A227]">
+          <label class="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Project Key</label>
+          <div class="relative">
+            <input id="jiraProject" type="text" placeholder="Loading projects…" autocomplete="off"
+              class="w-full border border-slate-300 rounded px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#C9A227]">
+            <ul id="projectDropdown" class="hidden absolute z-20 w-full bg-white border border-slate-200 rounded shadow-lg mt-1 max-h-56 overflow-y-auto text-sm"></ul>
+          </div>
         </div>
         <div>
           <label class="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Default Epic <span class="text-slate-400 normal-case font-normal">(per-ticket override possible)</span></label>
-          <input id="jiraEpic" type="text" placeholder="e.g. PROJ-123"
-            class="w-full border border-slate-300 rounded px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#C9A227]">
+          <div class="relative">
+            <input id="jiraEpic" type="text" placeholder="Select a project first" autocomplete="off"
+              class="w-full border border-slate-300 rounded px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#C9A227]">
+            <ul id="epicDropdown" class="hidden absolute z-20 w-full bg-white border border-slate-200 rounded shadow-lg mt-1 max-h-56 overflow-y-auto text-sm"></ul>
+          </div>
         </div>
       </div>
     </section>
@@ -124,7 +130,10 @@
       </div>
       <div class="mb-3">
         <label class="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Epic <span class="text-slate-400 normal-case font-normal">(optional, overrides default)</span></label>
-        <input class="ticket-epic w-full md:w-1/3 border border-slate-300 rounded px-3 py-2 text-sm font-mono bg-white focus:outline-none focus:ring-2 focus:ring-[#C9A227]" placeholder="PROJ-123">
+        <div class="relative md:w-1/3">
+          <input class="ticket-epic w-full border border-slate-300 rounded px-3 py-2 text-sm font-mono bg-white focus:outline-none focus:ring-2 focus:ring-[#C9A227]" placeholder="PROJ-123" autocomplete="off">
+          <ul class="ticket-epic-dropdown hidden absolute z-20 w-full bg-white border border-slate-200 rounded shadow-lg mt-1 max-h-48 overflow-y-auto text-sm"></ul>
+        </div>
       </div>
       <label class="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Description (markdown)</label>
       <textarea rows="14" class="ticket-body w-full border border-slate-300 rounded px-3 py-2 text-sm font-mono bg-white focus:outline-none focus:ring-2 focus:ring-[#C9A227]"></textarea>

@@ -4,6 +4,8 @@ const ISSUE_TYPE = 'Story';
 
 const jiraProject = document.getElementById('jiraProject');
 const jiraEpic = document.getElementById('jiraEpic');
+const projectDropdown = document.getElementById('projectDropdown');
+const epicDropdown = document.getElementById('epicDropdown');
 const pasteInput = document.getElementById('paste');
 const parseBtn = document.getElementById('parseBtn');
 const clearBtn = document.getElementById('clearBtn');
@@ -20,6 +22,8 @@ const modalClose = document.getElementById('modalClose');
 
 let tickets = [];
 let idCounter = 0;
+let allProjects = [];
+let allEpics = [];
 
 // === Persist Jira config ===
 const cfgFields = { jiraProject, jiraEpic };
@@ -28,6 +32,106 @@ for (const [key, el] of Object.entries(cfgFields)) {
   if (saved) el.value = saved;
   el.addEventListener('input', () => localStorage.setItem(`jira_${key}`, el.value));
 }
+
+// === Autocomplete helpers ===
+function makeDropdownItem(label, onSelect) {
+  const li = document.createElement('li');
+  li.textContent = label;
+  li.className = 'px-3 py-2 cursor-pointer hover:bg-amber-50 font-mono truncate';
+  li.addEventListener('mousedown', e => { e.preventDefault(); onSelect(); });
+  return li;
+}
+
+function showDropdown(dropdown, items) {
+  dropdown.innerHTML = '';
+  if (!items.length) { dropdown.classList.add('hidden'); return; }
+  items.forEach(item => dropdown.appendChild(item));
+  dropdown.classList.remove('hidden');
+}
+
+function hideDropdown(dropdown) {
+  dropdown.classList.add('hidden');
+}
+
+function wireEpicAutocomplete(input, dropdownEl) {
+  input.addEventListener('input', () => {
+    const q = input.value.toLowerCase();
+    const filtered = allEpics.filter(e =>
+      e.key.toLowerCase().includes(q) || e.summary.toLowerCase().includes(q)
+    );
+    const items = filtered.map(e =>
+      makeDropdownItem(`${e.key} — ${e.summary}`, () => {
+        input.value = e.key;
+        input.dispatchEvent(new Event('input'));
+        hideDropdown(dropdownEl);
+      })
+    );
+    showDropdown(dropdownEl, items);
+  });
+  input.addEventListener('focus', () => input.dispatchEvent(new Event('input')));
+  input.addEventListener('blur', () => setTimeout(() => hideDropdown(dropdownEl), 150));
+}
+
+// === Load projects on boot ===
+async function loadProjects() {
+  jiraProject.placeholder = 'Loading projects…';
+  try {
+    const r = await fetch('/api/jira-projects');
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    allProjects = await r.json();
+    jiraProject.placeholder = 'Type to search projects…';
+    // Restore saved value if still valid
+    const saved = localStorage.getItem('jira_jiraProject');
+    if (saved) { jiraProject.value = saved; loadEpics(saved); }
+  } catch (e) {
+    jiraProject.placeholder = 'Could not load projects';
+  }
+}
+
+async function loadEpics(projectKey) {
+  if (!projectKey) { allEpics = []; jiraEpic.placeholder = 'Select a project first'; return; }
+  jiraEpic.placeholder = 'Loading epics…';
+  try {
+    const r = await fetch(`/api/jira-epics?project=${encodeURIComponent(projectKey)}`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    allEpics = await r.json();
+    jiraEpic.placeholder = allEpics.length ? 'Type to search epics…' : 'No epics found';
+    // Refresh per-ticket epic dropdowns
+    document.querySelectorAll('.ticket-epic').forEach(el => el.dispatchEvent(new Event('input')));
+  } catch (e) {
+    jiraEpic.placeholder = 'Could not load epics';
+    allEpics = [];
+  }
+}
+
+// === Wire project autocomplete ===
+jiraProject.addEventListener('input', () => {
+  localStorage.setItem('jira_jiraProject', jiraProject.value);
+  const q = jiraProject.value.toLowerCase();
+  const filtered = allProjects.filter(p =>
+    p.key.toLowerCase().includes(q) || p.name.toLowerCase().includes(q)
+  );
+  const items = filtered.map(p =>
+    makeDropdownItem(`${p.key} — ${p.name}`, () => {
+      jiraProject.value = p.key;
+      localStorage.setItem('jira_jiraProject', p.key);
+      hideDropdown(projectDropdown);
+      jiraEpic.value = '';
+      localStorage.removeItem('jira_jiraEpic');
+      loadEpics(p.key);
+    })
+  );
+  showDropdown(projectDropdown, items);
+});
+jiraProject.addEventListener('focus', () => jiraProject.dispatchEvent(new Event('input')));
+jiraProject.addEventListener('blur', () => setTimeout(() => hideDropdown(projectDropdown), 150));
+jiraProject.addEventListener('change', () => {
+  const match = allProjects.find(p => p.key === jiraProject.value.toUpperCase());
+  if (match) loadEpics(match.key);
+});
+
+// === Wire default epic autocomplete ===
+wireEpicAutocomplete(jiraEpic, epicDropdown);
 
 // === Parser ===
 const SEP_RE = /^\s*[━─\-=]{3,}\s*$/;
@@ -128,6 +232,7 @@ function renderTicketCard(ticket) {
 
   const titleI = node.querySelector('.ticket-title');
   const epicI = node.querySelector('.ticket-epic');
+  const epicDrop = node.querySelector('.ticket-epic-dropdown');
   const bodyI = node.querySelector('.ticket-body');
   const previewEl = node.querySelector('.ticket-preview');
 
@@ -138,7 +243,23 @@ function renderTicketCard(ticket) {
   previewEl.innerHTML = marked.parse(ticket.body || '');
 
   titleI.addEventListener('input', () => { ticket.title = titleI.value; });
-  epicI.addEventListener('input', () => { ticket.epic = epicI.value; });
+  epicI.addEventListener('input', () => {
+    ticket.epic = epicI.value;
+    const q = epicI.value.toLowerCase();
+    const filtered = allEpics.filter(e =>
+      e.key.toLowerCase().includes(q) || e.summary.toLowerCase().includes(q)
+    );
+    const items = filtered.map(e =>
+      makeDropdownItem(`${e.key} — ${e.summary}`, () => {
+        epicI.value = e.key;
+        ticket.epic = e.key;
+        hideDropdown(epicDrop);
+      })
+    );
+    showDropdown(epicDrop, items);
+  });
+  epicI.addEventListener('focus', () => epicI.dispatchEvent(new Event('input')));
+  epicI.addEventListener('blur', () => setTimeout(() => hideDropdown(epicDrop), 150));
   bodyI.addEventListener('input', () => {
     ticket.body = bodyI.value;
     previewEl.innerHTML = marked.parse(ticket.body || '');
@@ -357,3 +478,4 @@ function escapeHtml(s) {
 
 // init
 render();
+loadProjects();
